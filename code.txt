@@ -1,0 +1,68 @@
+// 1. Set up Firebase project and enable Firebase Authentication and Firebase Cloud Messaging services
+
+// 2. Install Firebase SDK for .NET using NuGet package manager
+
+// 3. Send OTP to user's phone number
+[HttpPost]
+public async Task<IActionResult> SendOTP(string phoneNumber)
+{
+    var auth = new FirebaseAuthProvider(new FirebaseConfig("<API_KEY>"));
+    var options = new SendVerificationCodeOptions
+    {
+        PhoneNumber = phoneNumber,
+        Locale = "en" // optional
+    };
+    var result = await auth.SendVerificationCodeAsync(options);
+
+    // save the verification ID returned in the result object
+    // you will need it to verify the OTP later
+    var verificationId = result.VerificationId;
+
+    // return success response
+    return Ok();
+}
+
+// 4. Verify OTP and store authentication details in MySQL database
+[HttpPost]
+public async Task<IActionResult> VerifyOTP(string phoneNumber, string otp)
+{
+    var auth = new FirebaseAuthProvider(new FirebaseConfig("<API_KEY>"));
+    var verificationId = "<VERIFICATION_ID>"; // get this from previous API call
+    var options = new VerifyPhoneNumberCodeOptions
+    {
+        VerificationId = verificationId,
+        Code = otp
+    };
+    var result = await auth.VerifyPhoneNumberAsync(options);
+
+    if (result.FirebaseToken != null)
+    {
+        // authentication successful, store details in MySQL database
+        using var conn = new MySqlConnection("<CONNECTION_STRING>");
+        await conn.OpenAsync();
+        using var cmd = new MySqlCommand("INSERT INTO user_auth (phone_number, otp, timestamp) VALUES (@phoneNumber, @otp, @timestamp)", conn);
+        cmd.Parameters.AddWithValue("@phoneNumber", phoneNumber);
+        cmd.Parameters.AddWithValue("@otp", otp);
+        cmd.Parameters.AddWithValue("@timestamp", DateTime.Now);
+        await cmd.ExecuteNonQueryAsync();
+
+        // return success response
+        return Ok();
+    }
+    else
+    {
+        // authentication failed
+        return BadRequest("Invalid OTP");
+    }
+}
+
+// 5. Create database schema in MySQL to store user authentication details
+
+// 6. Validate OTP against MySQL database
+[HttpGet]
+public async Task<IActionResult> ValidateOTP(string phoneNumber, string otp)
+{
+    using var conn = new MySqlConnection("<CONNECTION_STRING>");
+    await conn.OpenAsync();
+    using var cmd = new MySqlCommand("SELECT COUNT(*) FROM user_auth
+}
