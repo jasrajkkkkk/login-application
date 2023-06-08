@@ -1,6 +1,6 @@
 # login-application
 As a fresher i don't have enough knowlegde to meet your expectation. 
-But i still tried my best to complete this task. thanks to this assignment  i had learned new thinks like google firebase, and http.  
+But i still tried my best to complete this task. thanks to this assignment  i had learned new thinks like google firebase, C#, etc.  
 
 backend of a login application built uisng .net and mysql.
 Steps to implement this project:
